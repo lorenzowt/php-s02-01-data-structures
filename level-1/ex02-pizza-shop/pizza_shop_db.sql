@@ -41,31 +41,25 @@ CREATE TABLE employees(
 		REFERENCES shops(shop_id)
 );
 
+CREATE TABLE pizza_categories(
+	category_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100)
+);
+
 CREATE TABLE products(
 	product_id INT PRIMARY KEY AUTO_INCREMENT,
     type ENUM ('pizza', 'drink', 'burger') NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     image_url VARCHAR(255),
-    price DECIMAL(5, 2) NOT NULL
-);
-
-CREATE TABLE pizza_categories(
-	category_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100)
-);
-
-CREATE TABLE pizzas(
-	product_id INT PRIMARY KEY,
-    category_id INT NOT NULL,
+    price DECIMAL(5, 2) NOT NULL,
+    category_id INT,
     
-    CONSTRAINT fk_pizzas_products
-    FOREIGN KEY (product_id)
-		REFERENCES products(product_id),
-	CONSTRAINT fk_pizzas_pizza_categories
+    CONSTRAINT fk_pizzas_pizza_categories
 	FOREIGN KEY (category_id)
 		REFERENCES pizza_categories(category_id)
 );
+
 
 CREATE TABLE orders(
 	order_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -125,22 +119,19 @@ INSERT INTO employees (role, name, last_name, nif, phone, shop_id) VALUES
 ('delivery', 'David', 'Fernández', '44444444D', '644444444', 1),
 ('delivery', 'Elena', 'Sánchez', '55555555E', '655555555', 2);
 
-INSERT INTO products (type, name, description, image_url, price) VALUES
-('pizza', 'Margherita', 'Tomato, mozzarella, basil', 'img/margherita.jpg', 8.50),
-('pizza', 'Pepperoni', 'Tomato, mozzarella, pepperoni', 'img/pepperoni.jpg', 9.50),
-('burger', 'Classic Burger', 'Beef, lettuce, tomato, cheese', 'img/burger.jpg', 7.90),
-('drink', 'Coca Cola', '330ml can', 'img/coke.jpg', 2.00),
-('drink', 'Water', '500ml bottle', 'img/water.jpg', 1.50),
-('burger', 'Chicken Burger', 'Chicken, mayo, lettuce', 'img/chicken.jpg', 8.20);
-
 INSERT INTO pizza_categories (name) VALUES
 ('Classic'),
 ('Gourmet'),
 ('Spicy');
 
-INSERT INTO pizzas (product_id, category_id) VALUES
-(1, 1), -- Margherita → Classic
-(2, 3); -- Pepperoni → Spicy
+INSERT INTO products (type, name, description, image_url, price, category_id) VALUES
+('pizza', 'Margherita', 'Tomato, mozzarella, basil', 'img/margherita.jpg', 8.50, 1),
+('pizza', 'Pepperoni', 'Tomato, mozzarella, pepperoni', 'img/pepperoni.jpg', 9.50, 3),
+('burger', 'Classic Burger', 'Beef, lettuce, tomato, cheese', 'img/burger.jpg', 7.90, null),
+('drink', 'Coca Cola', '330ml can', 'img/coke.jpg', 2.00, null),
+('drink', 'Water', '500ml bottle', 'img/water.jpg', 1.50, null),
+('burger', 'Chicken Burger', 'Chicken, mayo, lettuce', 'img/chicken.jpg', 8.20, null);
+
 
 INSERT INTO orders (client_id, shop_id, order_type, total_price, delivery_employee_id, delivery_datetime) VALUES
 (1, 1, 'delivery', 18.00, 4, '2026-06-03 12:30:00'),
@@ -180,7 +171,8 @@ FROM orders o
 JOIN shops s ON o.shop_id = s.shop_id
 JOIN order_products op ON o.order_id = op.order_id
 JOIN products p ON op.product_id = p.product_id
-WHERE s.city = 'Barcelona' AND p.type = 'drink';
+WHERE s.city = 'Barcelona' AND p.type = 'drink'
+GROUP BY s.city;
 
 -- Count of drinks sold in each city
 SELECT
@@ -199,7 +191,8 @@ SELECT
     COUNT(o.order_id) as delivery_count
 FROM orders o 
 JOIN employees e ON o.delivery_employee_id = e.employee_id
-WHERE e.employee_id = 4;
+WHERE e.employee_id = 4
+GROUP BY e.employee_id, e.name;
 
 -- Count of orders delivered by each employee
 SELECT
@@ -208,7 +201,6 @@ SELECT
 FROM orders o 
 JOIN employees e ON o.delivery_employee_id = e.employee_id
 GROUP BY e.employee_id, e.name;
-
 
 
 
